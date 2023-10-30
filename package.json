@@ -14,5 +14,10 @@
     "url": "git+https://github.com/Survicate/survicate-web-package.git"
   },
   "homepage": "https://github.com/Survicate/survicate-web-package#readme",
-  "license": "MIT"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Survicate/survicate-web-package/issues"
+  },
+  "main": "survicate_widget.js",
+  "types": "./survicate_widget.d.ts"
 }
