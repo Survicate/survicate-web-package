@@ -6,9 +6,6 @@
     "name": "Survicate",
     "email": "help@survicate.com"
   },
-  "engines": {
-    "node": "18.7.1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Survicate/survicate-web-package.git"
