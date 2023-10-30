@@ -12,7 +12,7 @@ Find your workspace key in the [Survicate Panel](https://panel.survicate.com/o/0
 ```
 import Survicate from '@survicate/survicate-web-package/survicate_widget'
 
-Survicate.init({workspaceKey: `${key}`});
+Survicate.init({workspaceKey: "`${key}`"});
 ```
 
 # Available methods
