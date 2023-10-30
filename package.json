@@ -1,0 +1,18 @@
+{
+  "version": "21.0.0-npm",
+  "name": "@survicate/survicate-web-package",
+  "description": "Survicate Web Package",
+  "author": {
+    "name": "Survicate",
+    "email": "help@survicate.com"
+  },
+  "engines": {
+    "node": "18.7.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Survicate/survicate-web-package.git"
+  },
+  "homepage": "https://github.com/Survicate/survicate-web-package#readme",
+  "license": "MIT"
+}
