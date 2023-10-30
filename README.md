@@ -7,7 +7,7 @@ It's built on top of [Preact](https://github.com/preactjs/preact) using [Typescr
 
 
 # Initialization 
-Find your workspace key under *settings > survey settings > web surveys* in the [Survicate Panel](https://panel.survicate.com/). 
+Find your workspace key in the [Survicate Panel](https://panel.survicate.com/o/0/w/0/settings/access-keys). 
 
 ```
 import Survicate from '@survicate/survicate-web-package/survicate_widget'
