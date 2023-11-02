@@ -9,12 +9,13 @@ It's built on top of [Preact](https://github.com/preactjs/preact) using [Typescr
 # Initialization 
 Find your workspace key in the [Survicate Panel](https://panel.survicate.com/o/0/w/0/settings/access-keys). 
 
+ES6 import
 ```
 import Survicate from '@survicate/survicate-web-package/survicate_widget'
 
-Survicate.init({workspaceKey: "`${key}`"});
+const key = "..." // Your key from the panel
+Survicate.init({workspaceKey: key});
 ```
 
 # Available methods
-
 All available methods can be found in our [documentation](https://developers.survicate.com/javascript/methods/).
