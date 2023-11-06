@@ -16,5 +16,5 @@
     "url": "https://github.com/Survicate/survicate-web-package/issues"
   },
   "main": "survicate_widget.js",
-  "types": "./survicate_widget.d.ts"
+  "types": "survicate_widget.d.ts"
 }

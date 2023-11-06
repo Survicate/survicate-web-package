@@ -1,23 +1,21 @@
 declare const Survicate: {
   init: (config: { workspaceKey: string }) => Promise<null | void>;
-  load: () => void;
   addEventListener: (
-    event: SurvicateApiEvents,
+    event: SurvicateApiEvent,
     callback: SurvicateCallbackTypes
-  ) => void;
+  ) => number | void;
   destroyVisitor: (callback?: () => void) => void;
   disableTargeting?: boolean;
-  getState: () => SurvicateState;
   getSurvey: () => { id: string | null; name: string | null };
   getVisitorId: () => string;
-  removeEventListener: (eventId: number) => void;
+  removeEventListener: (eventId: number | SurvicateApiEvent) => void;
   retarget: () => void;
   setVisitorTraits: (attributes: SurvicateVisitorAttributes) => void;
-  showSurvey: (id: string, options: ShowSurveyOptions) => void;
+  showSurvey: (id: string, options: ShowSurveyOptions) => boolean;
   traits?: SurvicateVisitorAttributes;
 };
 
-export enum SurvicateApiEvents {
+export enum SurvicateApiEvent {
   questionAnswered = 'question_answered',
   surveyDisplayed = 'survey_displayed',
   surveyCompleted = 'survey_completed',
@@ -25,6 +23,7 @@ export enum SurvicateApiEvents {
 }
 
 type SurvicateCallbackType = (surveyId: string, answer?: unknown) => void;
+
 type SurvicateQuestionAnsweredCallback = (
   surveyId: string,
   questionId: number,
@@ -37,46 +36,6 @@ export type SurvicateCallbackTypes =
 
 export interface SurvicateVisitorAttributes {
   [key: string]: string;
-}
-
-type WindowWithSvd = Window & {
-  _svd: unknown;
-};
-
-export interface SurvicateState {
-  backendData: unknown;
-  backendService: unknown | null;
-  isKioskMode: boolean;
-  isPreview: boolean;
-  previewDevice: unknown;
-  sampledSurveys: unknown | null;
-  storageService: unknown | null;
-  surveyApiState: unknown;
-  surveyState: SurvicateSurveyState;
-  tabId: number;
-  update: WindowWithSvd | Record<string, unknown>;
-  visit: unknown;
-  visitor: unknown;
-}
-
-export interface SurvicateSurveyState {
-  survey: unknown | null;
-  theme: unknown | null;
-  pointsDisplayed: unknown[];
-  pointsForward: unknown[];
-  pointsAnswered: {
-    [id: number]: boolean;
-  };
-  responseUuid: string;
-  isMinimized: boolean;
-  isOverlayActive: boolean;
-  isFinished: boolean;
-  isAlreadyAnswered: boolean;
-  isAnsweredByEmail: boolean;
-  triggeredPointPreview: number | null;
-  forceDisplay?: boolean;
-  translations: unknown | null;
-  translationLanguage: string | null;
 }
 
 export interface ShowSurveyOptions {
