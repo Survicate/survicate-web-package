@@ -25,6 +25,6 @@ Examples:
 Based on the respondent's interaction with our surveys you can trigger actions in your app or website:
 
 ```
-    Survicate.addEventListener(Survicate.ApiEvent.questionAnswered, () => console.log("question answered"));
+Survicate.addEventListener(Survicate.ApiEvent.questionAnswered, () => console.log("question answered"));
 
 ```
