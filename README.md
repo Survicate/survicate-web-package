@@ -20,7 +20,7 @@ Survicate.init({workspaceKey: key});
 All available methods can be found in our [documentation](https://developers.survicate.com/javascript/methods/).
 
 
-Examples:
+## Examples:
 
 Based on the respondent's interaction with our surveys you can trigger actions in your app or website:
 
