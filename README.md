@@ -18,3 +18,13 @@ Survicate.init({workspaceKey: key});
 
 # Available methods
 All available methods can be found in our [documentation](https://developers.survicate.com/javascript/methods/).
+
+
+Examples:
+
+Based on the respondent's interaction with our surveys you can trigger actions in your app or website:
+
+```
+    Survicate.addEventListener(Survicate.ApiEvent.questionAnswered, () => console.log("question answered"));
+
+```

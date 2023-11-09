@@ -1,27 +1,3 @@
-declare const Survicate: {
-  init: (config: { workspaceKey: string }) => Promise<null | void>;
-  addEventListener: (
-    event: SurvicateApiEvent,
-    callback: SurvicateCallbackTypes
-  ) => number | void;
-  destroyVisitor: (callback?: () => void) => void;
-  disableTargeting?: boolean;
-  getSurvey: () => { id: string | null; name: string | null };
-  getVisitorId: () => string;
-  removeEventListener: (eventId: number | SurvicateApiEvent) => void;
-  retarget: () => void;
-  setVisitorTraits: (attributes: SurvicateVisitorAttributes) => void;
-  showSurvey: (id: string, options: ShowSurveyOptions) => boolean;
-  traits?: SurvicateVisitorAttributes;
-};
-
-export enum SurvicateApiEvent {
-  questionAnswered = 'question_answered',
-  surveyDisplayed = 'survey_displayed',
-  surveyCompleted = 'survey_completed',
-  surveyClosed = 'survey_closed',
-}
-
 type SurvicateCallbackType = (surveyId: string, answer?: unknown) => void;
 
 type SurvicateQuestionAnsweredCallback = (
@@ -40,18 +16,44 @@ export interface SurvicateVisitorAttributes {
 
 export interface ShowSurveyOptions {
   forceDisplay?: true;
-  displayMethod?: SurvicateAppearMethod;
+  displayMethod?: AppearMethod;
   displayOptions?: {
     delay?: number;
     scrolledPercentage?: number;
   };
 }
 
-export enum SurvicateAppearMethod {
+export enum AppearMethod {
   immediately = 'immediately',
   delayed = 'delayed',
   exitIntent = 'exitIntent',
   scroll = 'onScroll',
 }
+
+export enum ApiEvent {
+  questionAnswered = 'question_answered',
+  surveyDisplayed = 'survey_displayed',
+  surveyCompleted = 'survey_completed',
+  surveyClosed = 'survey_closed',
+}
+
+declare const Survicate: {
+  init: (config: { workspaceKey: string }) => Promise<null | void>;
+  addEventListener: (
+    event: ApiEvent,
+    callback: SurvicateCallbackTypes
+  ) => number | void;
+  destroyVisitor: (callback?: () => void) => void;
+  disableTargeting?: boolean;
+  getSurvey: () => { id: string | null; name: string | null };
+  getVisitorId: () => string;
+  removeEventListener: (eventId: number | ApiEvent) => void;
+  retarget: () => void;
+  setVisitorTraits: (attributes: SurvicateVisitorAttributes) => void;
+  showSurvey: (id: string, options: ShowSurveyOptions) => boolean;
+  traits?: SurvicateVisitorAttributes;
+  ApiEvent: typeof ApiEvent;
+  AppearMethod: typeof AppearMethod;
+};
 
 export default Survicate;
