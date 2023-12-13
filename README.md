@@ -16,15 +16,28 @@ const key = "..." // Your key from the panel
 Survicate.init({workspaceKey: key});
 ```
 
-# Available methods
-All available methods can be found in our [documentation](https://developers.survicate.com/javascript/methods/).
-
-
 ## Examples:
 
-Based on the respondent's interaction with our surveys you can trigger actions in your app or website:
+To call available methods:
+
+```javascript
+import Survicate from '@survicate/survicate-web-package/survicate_widget'
+
+// Initialize survicate:
+const key = "..." // Your key from the panel
+Survicate.init({workspaceKey: key});
+
+// Show survey with force option
+Survicate.showSurvey('surveyId', { forceDisplay: true });
+
+// Set user attributes
+Survicate.setVisitorTraits({name: 'userName', lastName: 'userLastName'});
+
+// Add event listener
+Survicate.addEventListener(ApiEvent.questionAnswered , () => console.log('question answered'));
+
+// Remove eventListener
+Survicate.removeEventListener(ApiEvent.questionAnswered);
 
 ```
-Survicate.addEventListener(Survicate.ApiEvent.questionAnswered, () => console.log("question answered"));
-
-```
+*Please refer to the [documentation](https://developers.survicate.com/javascript/methods/) for the rest of the methods.*
