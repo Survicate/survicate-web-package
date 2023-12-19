@@ -54,6 +54,7 @@ declare const Survicate: {
   traits?: SurvicateVisitorAttributes;
   ApiEvent: typeof ApiEvent;
   AppearMethod: typeof AppearMethod;
+  invokeEvent: (eventName: string, eventProperties?: Record<string, any>) => void;
 };
 
 export default Survicate;
