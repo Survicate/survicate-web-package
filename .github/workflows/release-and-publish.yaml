@@ -1,5 +1,4 @@
-name: Publish and release
-
+name: Release and publish
 on:
   push:
     branches:
@@ -21,7 +20,7 @@ jobs:
         id: get_version
         run: |
           LATEST_VERSION=$(curl -s -H "Authorization: token ${{ secrets.NPM_TOKEN }}" https://api.github.com/repos/survicate/module-surveys-web/releases/latest | jq -r '.tag_name')
-          if [[ "LATEST_VERSION" == "null" || -z "$LATEST_VERSION" ]]; then
+          if [[ "$LATEST_VERSION" == "null" || -z "$LATEST_VERSION" ]]; then
             echo "Error: Latest release could not be fetched"
             exit 1
           fi
