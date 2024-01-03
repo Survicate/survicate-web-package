@@ -1,0 +1,62 @@
+name: Publish and release
+
+on:
+  push:
+    branches:
+      - development
+
+jobs:
+  create_and_publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Get latest release version from survicate/module-surveys-web
+        id: get_version
+        run: |
+          LATEST_VERSION=$(curl -s -H "Authorization: token ${{ secrets.NPM_TOKEN }}" https://api.github.com/repos/survicate/module-surveys-web/releases/latest | jq -r '.tag_name')
+          if [[ "LATEST_VERSION" == "null" || -z "$LATEST_VERSION" ]]; then
+            echo "Error: Latest release could not be fetched"
+            exit 1
+          fi
+          echo "Latest release is $LATEST_VERSION"
+          echo "::set-output name=latest_version::$LATEST_VERSION"
+
+      - name: Get latest release name from survicate/module-surveys-web
+        id: get_release
+        run: |
+          RELEASE_DATA=$(curl -s -H "Authorization: token ${{ secrets.NPM_TOKEN }}" https://api.github.com/repos/survicate/module-surveys-web/releases/latest)
+          FULL_RELEASE_NAME=$(echo "$RELEASE_DATA" | jq -r '.name')
+          if [[ "$FULL_RELEASE_NAME" == "null" || -z "$FULL_RELEASE_NAME" ]]; then
+            echo "Error: Latest release name could not be fetched"
+            exit 1
+          fi
+          echo "Full release name is $FULL_RELEASE_NAME"
+          echo "::set-output name=release_name::$FULL_RELEASE_NAME"
+
+      - name: Create a release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.NPM_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.latest_version }}
+          release_name: Release ${{ steps.get_release.outputs.release_name }}
+          body: For detailed releases information please visit https://developers.survicate.com/javascript/js-sdk-changelog/
+          draft: false
+          prerelease: false
+
+      - name: Configure npm for public registry
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
