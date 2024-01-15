@@ -32,6 +32,13 @@ export enum ApiEvents {
   surveyCompleted = 'survey_completed',
   surveyClosed = 'survey_closed',
 }
+export interface ConfigModel {
+  workspaceKey: string;
+  traits?: {
+  [key: string]: string;
+  };
+  disableTargeting?: true;
+}
 
 declare const Survicate: {
   ApiEvent: typeof ApiEvents;
@@ -41,7 +48,7 @@ declare const Survicate: {
   disableTargeting?: boolean;
   getSurvey: () => { id: string | null; name: string | null };
   getVisitorId: () => string;
-  init: (config: { workspaceKey: string }) => Promise<null | void>;
+  init: (config: ConfigModel) => Promise<null | void>;
   invokeEvent: (eventName: string, eventProperties?: Record<string, string>) => void;
   removeEventListener: (eventId: number | ApiEvents) => void;
   retarget: () => void;
