@@ -40,6 +40,20 @@ export interface ConfigModel {
   disableTargeting?: true;
 }
 
+export interface SurveyApi {
+  addEventListener: (event: ApiEvents, callback: CallbackTypes) => number | void;
+  destroyVisitor: (callback?: () => void) => void;
+  disableTargeting?: boolean;
+  getSurvey: () => { id: string | null; name: string | null };
+  getVisitorId: () => string;
+  invokeEvent: (eventName: string, eventProperties?: Record<string, string>) => void;
+  removeEventListener: (eventId: number | ApiEvents) => void;
+  retarget: () => void;
+  setVisitorTraits: (attributes: VisitorAttributes) => void;
+  showSurvey: (id: string, options: ShowSurveyOptions) => boolean;
+  traits?: VisitorAttributes;
+}
+
 declare const Survicate: {
   ApiEvent: typeof ApiEvents;
   AppearMethod: typeof AppearMethodApi;
