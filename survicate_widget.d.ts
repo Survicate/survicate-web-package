@@ -10,6 +10,15 @@ interface VisitorAttributes {
 
 export type CallbackTypes = CallbackType | QuestionAnsweredCallback;
 
+export enum SurveyType {
+  WidgetSurvey = 'WidgetSurvey',
+  PageSurvey = 'PageSurvey',
+  MobileSurvey = 'MobileSurvey',
+  FeedbackButton = 'FeedbackButton',
+  FeedbackButtonSurvey = 'FeedbackSurvey',
+  IntercomSurvey = 'IntercomSurvey'
+}
+
 export interface ShowSurveyOptions {
   forceDisplay?: true;
   displayMethod?: AppearMethodApi;
@@ -44,8 +53,8 @@ export interface SurveyApi {
   addEventListener: (event: ApiEvents, callback: CallbackTypes) => number | void;
   destroyVisitor: (callback?: () => void) => void;
   disableTargeting?: boolean;
-  getSurvey: () => { id: string | null; name: string | null };
-  getVisitorId: () => string;
+  getSurvey: () => Record<string, Record<string, string>>;
+  getVisitorId: (surveyType?: SurveyType) => string;
   invokeEvent: (eventName: string, eventProperties?: Record<string, string>) => void;
   removeEventListener: (eventId: number | ApiEvents) => void;
   retarget: () => void;
@@ -60,8 +69,8 @@ declare const Survicate: {
   addEventListener: (event: ApiEvents, callback: CallbackTypes) => number | void;
   destroyVisitor: (callback?: () => void) => void;
   disableTargeting?: boolean;
-  getSurvey: () => { id: string | null; name: string | null };
-  getVisitorId: () => string;
+  getSurvey: () => Record<string, Record<string, string>>;
+  getVisitorId: (surveyType?: SurveyType) => string;
   init: (config: ConfigModel) => Promise<null | void>;
   invokeEvent: (eventName: string, eventProperties?: Record<string, string>) => void;
   removeEventListener: (eventId: number | ApiEvents) => void;
