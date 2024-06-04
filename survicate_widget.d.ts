@@ -15,7 +15,6 @@ export enum SurveyType {
   PageSurvey = 'PageSurvey',
   MobileSurvey = 'MobileSurvey',
   FeedbackButton = 'FeedbackButton',
-  FeedbackButtonSurvey = 'FeedbackSurvey',
   IntercomSurvey = 'IntercomSurvey'
 }
 
