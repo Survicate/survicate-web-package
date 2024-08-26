@@ -46,6 +46,7 @@ export interface ConfigModel {
   [key: string]: string;
   };
   disableTargeting?: true;
+  nonce?: string;
 }
 
 export interface SurveyApi {
