@@ -41,12 +41,10 @@ export enum ApiEvents {
   surveyClosed = 'survey_closed',
 }
 export interface ConfigModel {
-  workspaceKey: string;
-  traits?: {
-  [key: string]: string;
-  };
   disableTargeting?: true;
   nonce?: string;
+  traits?: {[key: string]: any};
+  workspaceKey: string;
 }
 
 export interface SurveyApi {
