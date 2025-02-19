@@ -4,7 +4,7 @@ This package enables you to integrate Survicate surveys into your web applicatio
 
 ## Installation
 
-Install the package using npm:
+Install the package using NPM:
 
 ```bash
 npm install @survicate/survicate-web-package --save
