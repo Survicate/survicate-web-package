@@ -1,6 +1,6 @@
 # Survicate Web Package
 
-This package enables you to seamlessly integrate Survicate surveys into your web application. Built with [Preact](https://github.com/preactjs/preact), [TypeScript](https://github.com/Microsoft/TypeScript), and [CSS Modules](https://github.com/css-modules/css-modules).
+This package enables you to integrate Survicate surveys into your web application. Built with [Preact](https://github.com/preactjs/preact), [TypeScript](https://github.com/Microsoft/TypeScript), and [CSS Modules](https://github.com/css-modules/css-modules).
 
 ## Installation
 
