@@ -1,47 +1,71 @@
 # Survicate Web Package
-This package allows you to run a web survey directly in your code.
-It's built on top of [Preact](https://github.com/preactjs/preact) using [Typescript](https://github.com/Microsoft/TypeScript) and [CSS Modules](https://github.com/css-modules/css-modules).
 
-# Installation
-`npm install @survicate/survicate-web-package --save`
+This package enables you to integrate Survicate surveys into your web application. Built with [Preact](https://github.com/preactjs/preact), [TypeScript](https://github.com/Microsoft/TypeScript), and [CSS Modules](https://github.com/css-modules/css-modules).
 
+## Installation
 
-# Initialization
-Find your workspace key in the [Survicate Panel](https://panel.survicate.com/o/0/w/0/settings/access-keys).
+Install the package using NPM:
 
-```javascript
-import Survicate from '@survicate/survicate-web-package/survicate_widget'
-
-const key = "..." // Your key from the panel
-Survicate.init({workspaceKey: key});
+```bash
+npm install @survicate/survicate-web-package --save
 ```
 
-## Examples:
+## Initialization
 
-To call available methods:
+To initialize Survicate, you'll need your workspace key, which can be found in the [Survicate Panel](https://panel.survicate.com/o/0/w/0/settings/access-keys).
 
 ```javascript
-import Survicate from '@survicate/survicate-web-package/survicate_widget'
+import Survicate from '@survicate/survicate-web-package/survicate_widget';
 
-// Initialize survicate:
-const key = "..." // Your key from the panel
-Survicate.init({workspaceKey: key});
+// Replace with your actual workspace key
+const workspaceKey = 'Your workspace key';
 
-// Show survey with force option
-Survicate.showSurvey('surveyId', { forceDisplay: true });
-
-// Set user attributes
-Survicate.setVisitorTraits({name: 'userName', lastName: 'userLastName'});
-
-// Add event listener
-Survicate.addEventListener(ApiEvent.questionAnswered , () => console.log('question answered'));
-
-// Remove eventListener
-Survicate.removeEventListener(ApiEvent.questionAnswered);
-
+Survicate.init({ workspaceKey });
 ```
-*Please refer to the [documentation](https://developers.survicate.com/javascript/methods/) for the rest of the methods.*
 
-# Changelog
+## Usage Examples
 
-The Survicate JavaScript SDK changelog can be found [here](https://developers.survicate.com/javascript/js-sdk-changelog/)
+Here are some common methods you can utilize:
+
+```javascript
+import Survicate from '@survicate/survicate-web-package/survicate_widget';
+
+// Initialize Survicate and provide user attributes
+const config = {
+  workspaceKey: 'Your workspace key',
+  traits: {
+    'user_id': 'Your user ID here',
+    'company_name': 'Value here',
+    'subscription_status': 'Value here',
+    'signed_up': 'Value here'
+  }
+};
+
+Survicate.init(config);
+
+// Force display a specific survey
+Survicate.showSurvey('survey id', { forceDisplay: true });
+
+// Set visitor attributes and retarget afterwards
+Survicate.setVisitorTraits({
+  email: 'john_doe@example.com',
+  first_name: 'John',
+  last_name: 'Doe',
+});
+
+Survicate.retarget();
+
+// Add an event listener for when a question is answered
+Survicate.addEventListener(Survicate.ApiEvent.questionAnswered, (surveyId, surveyName) => {
+  console.log(`A question was answered - survey: ${surveyName} ${surveyId}`);
+});
+
+// Remove the event listener
+Survicate.removeEventListener(Survicate.ApiEvent.questionAnswered);
+```
+
+For a list of available methods and their detailed usage, please refer to the [Survicate JavaScript API Documentation](https://developers.survicate.com/javascript/methods/).
+
+## Changelog
+
+Stay updated with the latest changes and improvements by reviewing the [Survicate JavaScript SDK Changelog](https://developers.survicate.com/javascript/js-sdk-changelog/).
