@@ -64,7 +64,7 @@ Survicate.addEventListener(Survicate.ApiEvent.questionAnswered, (surveyId, surve
 Survicate.removeEventListener(Survicate.ApiEvent.questionAnswered);
 ```
 
-For a comprehensive list of available methods and their detailed usage, please refer to the [Survicate JavaScript API Documentation](https://developers.survicate.com/javascript/methods/).
+For a list of available methods and their detailed usage, please refer to the [Survicate JavaScript API Documentation](https://developers.survicate.com/javascript/methods/).
 
 ## Changelog
 
