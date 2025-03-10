@@ -42,6 +42,7 @@ export enum ApiEvents {
 }
 export interface ConfigModel {
   disableTargeting?: true;
+  disableSensitiveDataPersistence?: boolean;
   nonce?: string;
   traits?: {[key: string]: any};
   workspaceKey: string;
