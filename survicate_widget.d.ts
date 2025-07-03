@@ -19,7 +19,7 @@ export enum SurveyType {
 }
 
 export interface ShowSurveyOptions {
-  forceDisplay?: true;
+  forceDisplay?: boolean;
   displayMethod?: AppearMethodApi;
   displayOptions?: {
     delay?: number;
