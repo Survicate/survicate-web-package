@@ -19,7 +19,7 @@ export enum SurveyType {
 }
 
 export interface ShowSurveyOptions {
-  forceDisplay?: true;
+  forceDisplay?: boolean;
   displayMethod?: AppearMethodApi;
   displayOptions?: {
     delay?: number;
@@ -43,9 +43,29 @@ export enum ApiEvents {
 export interface ConfigModel {
   disableTargeting?: true;
   disableSensitiveDataPersistence?: boolean;
+  hiddenSurveys?: string[];
   nonce?: string;
   traits?: {[key: string]: any};
   workspaceKey: string;
+}
+
+export enum SurveyQuestionAnswerType {
+  single = 'single',
+  text = 'text',
+  rating = 'rating',
+  ranking = 'ranking',
+  numericalScale = 'numerical_scale',
+  customerSatisfaction = 'csat'
+}
+
+export enum SurveyNpsAnswerType {
+  nps = 'nps',
+}
+
+export interface SurveyPointInfo {
+  pointId: number;
+  answerType: SurveyQuestionAnswerType | SurveyNpsAnswerType,
+  answers?: Array<{id: number}>;
 }
 
 export interface SurveyApi {
@@ -74,6 +94,8 @@ declare const Survicate: {
   retarget: () => void;
   setVisitorTraits: (attributes: VisitorAttributes) => void;
   showSurvey: (id: string, options: ShowSurveyOptions) => boolean;
+  submitAnswer: (params: { surveyId: string; pointId: number; answerId: number; answer: string | number}) => void;
+  getSurveyPointsMetadata: (surveyId: string) => SurveyPointInfo[] | null;
   traits?: VisitorAttributes;
 };
 
