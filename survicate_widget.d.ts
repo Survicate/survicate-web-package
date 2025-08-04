@@ -15,7 +15,7 @@ export enum SurveyType {
   PageSurvey = 'PageSurvey',
   MobileSurvey = 'MobileSurvey',
   FeedbackButton = 'FeedbackButton',
-  IntercomSurvey = 'IntercomSurvey'
+  IntercomSurvey = 'IntercomSurvey',
 }
 
 export interface ShowSurveyOptions {
@@ -45,7 +45,7 @@ export interface ConfigModel {
   disableSensitiveDataPersistence?: boolean;
   hiddenSurveys?: string[];
   nonce?: string;
-  traits?: {[key: string]: any};
+  traits?: { [key: string]: any };
   workspaceKey: string;
 }
 
@@ -55,7 +55,7 @@ export enum SurveyQuestionAnswerType {
   rating = 'rating',
   ranking = 'ranking',
   numericalScale = 'numerical_scale',
-  customerSatisfaction = 'csat'
+  customerSatisfaction = 'csat',
 }
 
 export enum SurveyNpsAnswerType {
@@ -64,8 +64,8 @@ export enum SurveyNpsAnswerType {
 
 export interface SurveyPointInfo {
   pointId: number;
-  answerType: SurveyQuestionAnswerType | SurveyNpsAnswerType,
-  answers?: Array<{id: number}>;
+  answerType: SurveyQuestionAnswerType | SurveyNpsAnswerType;
+  answers?: Array<{ id: number }>;
 }
 
 export interface SurveyApi {
@@ -94,7 +94,12 @@ declare const Survicate: {
   retarget: () => void;
   setVisitorTraits: (attributes: VisitorAttributes) => void;
   showSurvey: (id: string, options: ShowSurveyOptions) => boolean;
-  submitAnswer: (params: { surveyId: string; pointId: number; answerId: number; answer: string | number}) => void;
+  submitAnswer: (params: {
+    surveyId: string;
+    pointId: number;
+    answerId: number;
+    answer: string | number;
+  }) => void;
   getSurveyPointsMetadata: (surveyId: string) => SurveyPointInfo[] | null;
   traits?: VisitorAttributes;
 };
