@@ -122,6 +122,8 @@ export interface ConfigModel {
   disableTargeting?: true;
   /** Disable persistence of sensitive visitor data */
   disableSensitiveDataPersistence?: boolean;
+  /** Force surveys to display in a specific language (IETF language tag, e.g., "en", "fr", "pt-BR") */
+  forcedLanguage?: string;
   /** Array of survey IDs to hide from targeting */
   hiddenSurveys?: string[];
   /** Content Security Policy nonce for script injection */
@@ -291,6 +293,31 @@ export interface SurveyApi {
    * Re-evaluate targeting rules and show surveys if conditions are met
    */
   retarget: () => void;
+
+  /**
+   * Force the survey language to a specific IETF language tag
+   *
+   * This method overrides all automatic language detection methods (URL parameters,
+   * path segments, TLD, and browser language). The language will be applied to all
+   * surveys until explicitly changed or cleared.
+   *
+   * The argument must be a valid IETF language tag such as:
+   * - A two-letter ISO 639 code (e.g., "en", "fr")
+   * - A three-letter code for languages without the two-letter equivalent (e.g., "haw", "yue")
+   * - A language tag with region (e.g., "en-US", "pt-BR")
+   *
+   * @param languageTag - IETF language tag to force for all surveys
+   *
+   * @example
+   * ```javascript
+   * // Force surveys to display in French
+   * Survicate.setSurveyLanguage('fr');
+   *
+   * // Force surveys to display in Brazilian Portuguese
+   * Survicate.setSurveyLanguage('pt-BR');
+   * ```
+   */
+  setSurveyLanguage: (languageTag: string) => void;
 
   /**
    * Set visitor traits/attributes for targeting and identification
@@ -488,6 +515,31 @@ declare const Survicate: {
    * Useful after setting new visitor traits or invoking events.
    */
   retarget: () => void;
+
+  /**
+   * Force the survey language to a specific IETF language tag
+   *
+   * This method overrides all automatic language detection methods (URL parameters,
+   * path segments, TLD, and browser language). The language will be applied to all
+   * surveys until explicitly changed or cleared.
+   *
+   * The argument must be a valid IETF language tag such as:
+   * - A two-letter ISO 639 code (e.g., "en", "fr")
+   * - A three-letter code for languages without the two-letter equivalent (e.g., "haw", "yue")
+   * - A language tag with region (e.g., "en-US", "pt-BR")
+   *
+   * @example
+   * ```javascript
+   * // Force surveys to display in French
+   * Survicate.setSurveyLanguage('fr');
+   *
+   * // Force surveys to display in Brazilian Portuguese
+   * Survicate.setSurveyLanguage('pt-BR');
+   * ```
+   *
+   * @param languageTag - IETF language tag to force for all surveys
+   */
+  setSurveyLanguage: (languageTag: string) => void;
 
   /**
    * Set visitor traits/attributes for targeting and identification
