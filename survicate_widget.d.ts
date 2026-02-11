@@ -124,6 +124,8 @@ export interface ConfigModel {
   disableSensitiveDataPersistence?: boolean;
   /** Force surveys to display in a specific language (IETF language tag, e.g., "en", "fr", "pt-BR") */
   forcedLanguage?: string;
+  /** Force initial theme mode: "light", "dark", or "auto" (follow system). Same as setThemeMode() but applied on init */
+  themeMode?: string;
   /** Array of survey IDs to hide from targeting */
   hiddenSurveys?: string[];
   /** Content Security Policy nonce for script injection */
@@ -318,6 +320,26 @@ export interface SurveyApi {
    * ```
    */
   setSurveyLanguage: (languageTag: string) => void;
+
+  /**
+   * Set the theme mode for displaying surveys
+   *
+   * This method allows you to control whether surveys use light or dark theme.
+   * The mode can be set to "light" or "dark" (case-insensitive).
+   * Note: "auto" mode is not available via API and is the default behavior.
+   *
+   * @param mode - Theme mode: "light" or "dark" (case-insensitive)
+   *
+   * @example
+   * ```javascript
+   * // Force surveys to use light theme
+   * Survicate.setThemeMode('light');
+   *
+   * // Force surveys to use dark theme
+   * Survicate.setThemeMode('dark');
+   * ```
+   */
+  setThemeMode: (mode: string) => void;
 
   /**
    * Set visitor traits/attributes for targeting and identification
@@ -540,6 +562,26 @@ declare const Survicate: {
    * @param languageTag - IETF language tag to force for all surveys
    */
   setSurveyLanguage: (languageTag: string) => void;
+
+  /**
+   * Set the theme mode for displaying surveys
+   *
+   * This method allows you to control whether surveys use light or dark theme.
+   * The mode can be set to "light" or "dark" (case-insensitive).
+   * Note: "auto" mode is not available via API and is the default behavior.
+   *
+   * @example
+   * ```javascript
+   * // Force surveys to use light theme
+   * Survicate.setThemeMode('light');
+   *
+   * // Force surveys to use dark theme
+   * Survicate.setThemeMode('dark');
+   * ```
+   *
+   * @param mode - Theme mode: "light" or "dark" (case-insensitive)
+   */
+  setThemeMode: (mode: string) => void;
 
   /**
    * Set visitor traits/attributes for targeting and identification
