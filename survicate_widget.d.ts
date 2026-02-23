@@ -39,6 +39,19 @@ interface VisitorAttributes {
 }
 
 /**
+ * Interface for response attributes
+ * Response attributes are session-based and tied to survey responses
+ */
+interface ResponseAttribute {
+  /** Name of the attribute */
+  name: string;
+  /** Provider of the attribute (optional) */
+  provider?: string;
+  /** Value of the attribute */
+  value: AttributeValue;
+}
+
+/**
  * Union type for all possible callback types
  */
 export type CallbackTypes = CallbackType | QuestionAnsweredCallback;
@@ -130,6 +143,8 @@ export interface ConfigModel {
   hiddenSurveys?: string[];
   /** Content Security Policy nonce for script injection */
   nonce?: string;
+  /** Initial response traits/attributes to set (session-based) */
+  responseTraits?: ResponseAttribute[];
   /** Initial visitor traits/attributes to set */
   traits?: VisitorAttributes;
   /** Your Survicate workspace key that can be found here https://panel.survicate.com/o/0/w/0/settings/access-keys*/
@@ -295,6 +310,12 @@ export interface SurveyApi {
    * Re-evaluate targeting rules and show surveys if conditions are met
    */
   retarget: () => void;
+
+  /**
+   * Set response traits/attributes that are tied to survey responses (session-based)
+   * @param attributes - Array of response attribute objects with name, optional provider, and value
+   */
+  setResponseTraits: (attributes: ResponseAttribute[]) => void;
 
   /**
    * Force the survey language to a specific IETF language tag
@@ -537,6 +558,26 @@ declare const Survicate: {
    * Useful after setting new visitor traits or invoking events.
    */
   retarget: () => void;
+
+  /**
+   * Set response traits/attributes that are tied to survey responses (session-based)
+   *
+   * Response traits are session-based attributes that are included in survey
+   * answer payloads. Unlike visitor traits, they are stored in sessionStorage
+   * and cleared when the session ends.
+   *
+   * @example
+   * ```javascript
+   * Survicate.setResponseTraits([
+   *   { name: 'campaign_id', provider: 'static', value: 'summer-2024' },
+   *   { name: 'page_type', value: 'checkout' }, // provider is optional
+   *   { name: 'referrer', provider: 'static', value: 'google' }
+   * ]);
+   * ```
+   *
+   * @param attributes - Array of response attribute objects with name, optional provider, and value
+   */
+  setResponseTraits: (attributes: ResponseAttribute[]) => void;
 
   /**
    * Force the survey language to a specific IETF language tag
