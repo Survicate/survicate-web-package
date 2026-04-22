@@ -1,0 +1,7 @@
+# Defense-in-depth: the "files" field in package.json is the primary guard.
+.env*
+.git/
+.github/
+test-*
+node_modules/
+*.tgz
