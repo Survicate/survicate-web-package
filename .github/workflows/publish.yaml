@@ -34,7 +34,7 @@ jobs:
       - name: Check version not already tagged
         run: |
           set -o pipefail
-          VERSION=$(jq -r .version package.json)
+          VERSION=$(node -p "require('./package.json').version")
           if git ls-remote --exit-code --tags --refs origin "refs/tags/v${VERSION}" >/dev/null 2>&1; then
             echo "::error::Tag v${VERSION} already exists. Bump the version in package.json first."
             exit 1
@@ -63,7 +63,7 @@ jobs:
 
       - name: Create git tag
         run: |
-          VERSION=$(jq -r .version package.json)
+          VERSION=$(node -p "require('./package.json').version")
           git tag "v${VERSION}"
           git push origin "v${VERSION}"
 
@@ -72,7 +72,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
         run: |
-          VERSION=$(jq -r .version package.json)
+          VERSION=$(node -p "require('./package.json').version")
           notes_file="$(mktemp)"
           trap 'rm -f "$notes_file"' EXIT
           printf '%s' "$RELEASE_NOTES" > "$notes_file"
