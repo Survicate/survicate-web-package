@@ -27,7 +27,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Check version not already tagged
         run: |
@@ -58,8 +57,6 @@ jobs:
 
       - name: Publish
         run: npm publish --ignore-scripts --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create git tag
         run: |
