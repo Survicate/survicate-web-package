@@ -137,6 +137,11 @@ export interface ConfigModel {
   disableSensitiveDataPersistence?: boolean;
   /** Force surveys to display in a specific language (IETF language tag, e.g., "en", "fr", "pt-BR") */
   forcedLanguage?: string;
+  /**
+   * Use the page's `<html lang>` attribute as a language detection source (checked before URL and browser language).
+   * Opt-in only: passing `false` does not clear a value already set on `window._sva.useHtmlLangAttribute`.
+   */
+  useHtmlLangAttribute?: boolean;
   /** Force initial theme mode: "light", "dark", or "auto" (follow system). Same as setThemeMode() but applied on init */
   themeMode?: string;
   /** Array of survey IDs to hide from targeting */
@@ -245,6 +250,9 @@ export interface SurveyApi {
 
   /** Whether sensitive data persistence is disabled */
   disableSensitiveDataPersistence?: boolean;
+
+  /** Whether the page's `<html lang>` attribute is used as a language detection source */
+  useHtmlLangAttribute?: boolean;
 
   /** Array of survey IDs to hide from targeting */
   hiddenSurveys?: string[];
