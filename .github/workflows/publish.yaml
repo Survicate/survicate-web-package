@@ -12,6 +12,7 @@ on:
 
 concurrency:
   group: publish
+  queue: max
   cancel-in-progress: false
 
 env:
@@ -24,11 +25,19 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: development
+      - name: Refuse to run outside development
+        if: github.ref_name != 'development'
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          echo "::error::This workflow publishes from development only; it was started on ${REF_NAME}."
+          exit 1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '24'
 
@@ -44,126 +53,151 @@ jobs:
       - name: Read package version
         id: pkg
         run: |
-          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
-          echo "name=$(node -p "require('./package.json').name")" >> "$GITHUB_OUTPUT"
-
-      - name: Check whether this version was already released
-        id: guard
-        env:
-          VERSION: ${{ steps.pkg.outputs.version }}
-        run: |
-          if git ls-remote --exit-code --tags --refs origin "refs/tags/${VERSION}" >/dev/null 2>&1; then
-            echo "Tag ${VERSION} already exists."
-            echo "released=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "released=false" >> "$GITHUB_OUTPUT"
+          version="$(node -p "require('./package.json').version")"
+          name="$(node -p "require('./package.json').name")"
+          if ! printf '%s' "$version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::package.json version '${version}' is not a plain semver version."
+            exit 1
           fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "name=${name}" >> "$GITHUB_OUTPUT"
 
-      - name: Update notes on an existing release
-        if: steps.guard.outputs.released == 'true' && inputs.release_notes != ''
+      - name: Inspect release state
+        id: state
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.pkg.outputs.version }}
-          MANUAL_NOTES: ${{ inputs.release_notes }}
-        run: |
-          notes_file="$(mktemp)"
-          trap 'rm -f "$notes_file"' EXIT
-          printf '%s' "$MANUAL_NOTES" > "$notes_file"
-          if gh release view "$VERSION" >/dev/null 2>&1; then
-            gh release edit "$VERSION" --notes-file "$notes_file"
-          else
-            gh release create "$VERSION" --title "$VERSION" --notes-file "$notes_file"
-          fi
-
-      - name: Resolve release notes
-        id: notes
-        if: steps.guard.outputs.released == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          VERSION: ${{ steps.pkg.outputs.version }}
-          MANUAL_NOTES: ${{ inputs.release_notes }}
-        run: |
-          set -o pipefail
-          notes=""
-          if [ -n "${MANUAL_NOTES:-}" ]; then
-            notes="$MANUAL_NOTES"
-          elif [ -z "${GH_TOKEN:-}" ]; then
-            echo "::warning::No token with read access to ${STATIC_REPO}; releasing without notes."
-          else
-            for attempt in $(seq 1 20); do
-              title="$(gh release view "$VERSION" --repo "$STATIC_REPO" --json name --jq .name 2>/dev/null || true)"
-              if [ -n "$title" ]; then
-                notes="${title#"$VERSION" }"
-                break
-              fi
-              echo "No ${STATIC_REPO} release for ${VERSION} yet (attempt ${attempt}/20); waiting 30s."
-              sleep 30
-            done
-            if [ -z "$notes" ]; then
-              echo "::warning::No ${STATIC_REPO} release for ${VERSION} after 10 minutes; releasing without notes."
-            fi
-          fi
-          {
-            echo "notes<<RELEASE_NOTES_EOF"
-            printf '%s\n' "$notes"
-            echo "RELEASE_NOTES_EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Safety check
-        if: steps.guard.outputs.released == 'false'
-        run: |
-          pack_output="$(npm pack --dry-run --ignore-scripts 2>&1)" || {
-            echo "::error::npm pack failed:"
-            printf '%s\n' "$pack_output"
-            exit 1
-          }
-          printf '%s\n' "$pack_output"
-          pack_files="$(printf '%s\n' "$pack_output" \
-            | grep '^npm notice ' \
-            | grep -vE '(Tarball Details|Tarball Contents|name:|version:|filename:|package size:|unpacked size:|shasum:|integrity:|total files:)' \
-            | sed -E 's/^npm notice[[:space:]]+([0-9.]+[kKMGT]?B[[:space:]]+)?//' \
-            || true)"
-          if printf '%s\n' "$pack_files" | grep -qiE '(^|/)\.env(\.[^/]+)?$|(^|/)\.npmrc$|(^|/)(id_rsa|id_ed25519)$|(^|/)[^/]+\.(pem|key)$|(^|/)(credentials|secret|secrets)(\.(json|ya?ml|env|txt))?$'; then
-            echo "::error::Sensitive files detected in npm package! Aborting."
-            exit 1
-          fi
-
-      - name: Check whether this version is already on npm
-        id: registry
-        if: steps.guard.outputs.released == 'false'
-        env:
           PKG: ${{ steps.pkg.outputs.name }}
           VERSION: ${{ steps.pkg.outputs.version }}
+          MANUAL_NOTES: ${{ inputs.release_notes }}
         run: |
+          published=false
+          tagged=false
+          released=false
+          notes_empty=true
           if [ -n "$(npm view "${PKG}@${VERSION}" version 2>/dev/null || true)" ]; then
-            echo "${PKG}@${VERSION} is already on npm; skipping publish."
-            echo "published=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "published=false" >> "$GITHUB_OUTPUT"
+            published=true
           fi
+          if git ls-remote --exit-code --tags --refs origin "refs/tags/${VERSION}" >/dev/null 2>&1; then
+            tagged=true
+          fi
+          if body="$(gh release view "$VERSION" --json body --jq .body 2>/dev/null)"; then
+            released=true
+            if [ -n "$body" ]; then
+              notes_empty=false
+            fi
+          fi
+          if [ "$released" = "false" ] || [ "$notes_empty" = "true" ] || [ -n "${MANUAL_NOTES:-}" ]; then
+            notes_needed=true
+          else
+            notes_needed=false
+          fi
+          {
+            echo "published=${published}"
+            echo "tagged=${tagged}"
+            echo "released=${released}"
+            echo "notes_needed=${notes_needed}"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "### ${PKG}@${VERSION}"
+            echo ""
+            echo "| already on npm | already tagged | release exists | notes to resolve |"
+            echo "| --- | --- | --- | --- |"
+            echo "| ${published} | ${tagged} | ${released} | ${notes_needed} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Safety check
+        if: steps.state.outputs.published == 'false'
+        run: |
+          npm pack --dry-run --json --ignore-scripts | node -e "
+            let raw = '';
+            process.stdin.on('data', chunk => raw += chunk).on('end', () => {
+              const files = JSON.parse(raw)[0].files.map(file => file.path);
+              console.log('Package contents: ' + files.join(', '));
+              const risky = /(^|\/)\.env(\..+)?\$|(^|\/)\.npmrc\$|(^|\/)(id_rsa|id_ed25519)\$|\.(pem|key)\$|(^|\/)(credentials|secrets?)(\.(json|ya?ml|env|txt))?\$/i;
+              const found = files.filter(file => risky.test(file));
+              if (found.length > 0) {
+                console.error('::error::Sensitive files detected in npm package: ' + found.join(', '));
+                process.exit(1);
+              }
+            });
+          "
 
       - name: Publish
-        if: steps.guard.outputs.released == 'false' && steps.registry.outputs.published == 'false'
+        if: steps.state.outputs.published == 'false'
         run: npm publish --ignore-scripts --provenance --access public
 
       - name: Create git tag
-        if: steps.guard.outputs.released == 'false'
+        if: steps.state.outputs.tagged == 'false'
         env:
           VERSION: ${{ steps.pkg.outputs.version }}
         run: |
           git tag "$VERSION"
           git push origin "$VERSION"
 
-      - name: Create GitHub release
-        if: steps.guard.outputs.released == 'false'
+      - name: Resolve release notes
+        id: notes
+        if: steps.state.outputs.notes_needed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          VERSION: ${{ steps.pkg.outputs.version }}
+          MANUAL_NOTES: ${{ inputs.release_notes }}
+          AUTOMATED: ${{ github.event_name == 'push' }}
+          ATTEMPTS: '20'
+        run: |
+          notes=""
+          error_log="${RUNNER_TEMP}/gh-release-view.log"
+          if [ -n "${MANUAL_NOTES:-}" ]; then
+            notes="$MANUAL_NOTES"
+          elif [ -z "${GH_TOKEN:-}" ]; then
+            if [ "$AUTOMATED" = "true" ]; then
+              echo "::error::No token with read access to ${STATIC_REPO}. Add the GH_TOKEN secret, or dispatch this workflow with release notes."
+              exit 1
+            fi
+            echo "::warning::No token with read access to ${STATIC_REPO}; releasing without notes."
+          else
+            for attempt in $(seq 1 "$ATTEMPTS"); do
+              if title="$(gh release view "$VERSION" --repo "$STATIC_REPO" --json name --jq .name 2>"$error_log")" && [ -n "$title" ]; then
+                notes="${title#"$VERSION" }"
+                break
+              fi
+              if grep -qiE 'HTTP 40[13]|bad credentials|authentication' "$error_log"; then
+                echo "::error::Cannot read ${STATIC_REPO} releases: $(tr '\n' ' ' < "$error_log")"
+                exit 1
+              fi
+              if [ "$attempt" -lt "$ATTEMPTS" ]; then
+                echo "No ${STATIC_REPO} release for ${VERSION} yet (attempt ${attempt}/${ATTEMPTS}); waiting 30s."
+                sleep 30
+              fi
+            done
+            if [ -z "$notes" ]; then
+              if [ "$AUTOMATED" = "true" ]; then
+                echo "::error::No ${STATIC_REPO} release for ${VERSION} after 10 minutes. Cut it, then re-run this workflow to finish the release."
+                exit 1
+              fi
+              echo "::warning::No ${STATIC_REPO} release for ${VERSION} after 10 minutes; releasing without notes."
+            fi
+          fi
+          delimiter="RELEASE_NOTES_$(openssl rand -hex 16)"
+          {
+            echo "notes<<${delimiter}"
+            printf '%s\n' "$notes"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create or update the GitHub release
+        if: steps.state.outputs.notes_needed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.pkg.outputs.version }}
           RELEASE_NOTES: ${{ steps.notes.outputs.notes }}
+          RELEASED: ${{ steps.state.outputs.released }}
         run: |
-          notes_file="$(mktemp)"
-          trap 'rm -f "$notes_file"' EXIT
+          notes_file="${RUNNER_TEMP}/release-notes.md"
           printf '%s' "$RELEASE_NOTES" > "$notes_file"
-          gh release create "$VERSION" \
-            --title "$VERSION" \
-            --notes-file "$notes_file"
+          if [ "$RELEASED" = "true" ]; then
+            gh release edit "$VERSION" --notes-file "$notes_file"
+            echo "Updated the notes on release ${VERSION}: ${RELEASE_NOTES:-(empty)}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            gh release create "$VERSION" --title "$VERSION" --notes-file "$notes_file"
+            echo "Created release ${VERSION}: ${RELEASE_NOTES:-(empty)}" >> "$GITHUB_STEP_SUMMARY"
+          fi
