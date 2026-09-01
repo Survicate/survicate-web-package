@@ -1,15 +1,21 @@
 name: Publish to NPM
 
 on:
+  push:
+    branches:
+      - development
   workflow_dispatch:
     inputs:
       release_notes:
-        description: 'Short release description'
-        required: true
+        description: 'Release notes. Leave empty to reuse the matching module-surveys-web release title.'
+        required: false
 
 concurrency:
   group: publish
   cancel-in-progress: false
+
+env:
+  STATIC_REPO: Survicate/module-surveys-web
 
 jobs:
   publish:
@@ -24,19 +30,87 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: '24'
 
-      - name: Check version not already tagged
+      - name: Verify npm supports trusted publishing
         run: |
-          set -o pipefail
-          VERSION=$(node -p "require('./package.json').version")
-          if git ls-remote --exit-code --tags --refs origin "refs/tags/v${VERSION}" >/dev/null 2>&1; then
-            echo "::error::Tag v${VERSION} already exists. Bump the version in package.json first."
+          npm_version="$(npm --version)"
+          echo "npm ${npm_version}"
+          if [ "$(printf '%s\n11.5.1\n' "$npm_version" | sort -V | head -n1)" != "11.5.1" ]; then
+            echo "::error::npm ${npm_version} cannot use trusted publishing; 11.5.1 or newer is required."
             exit 1
           fi
 
+      - name: Read package version
+        id: pkg
+        run: |
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "name=$(node -p "require('./package.json').name")" >> "$GITHUB_OUTPUT"
+
+      - name: Check whether this version was already released
+        id: guard
+        env:
+          VERSION: ${{ steps.pkg.outputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags --refs origin "refs/tags/${VERSION}" >/dev/null 2>&1; then
+            echo "Tag ${VERSION} already exists."
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update notes on an existing release
+        if: steps.guard.outputs.released == 'true' && inputs.release_notes != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.pkg.outputs.version }}
+          MANUAL_NOTES: ${{ inputs.release_notes }}
+        run: |
+          notes_file="$(mktemp)"
+          trap 'rm -f "$notes_file"' EXIT
+          printf '%s' "$MANUAL_NOTES" > "$notes_file"
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            gh release edit "$VERSION" --notes-file "$notes_file"
+          else
+            gh release create "$VERSION" --title "$VERSION" --notes-file "$notes_file"
+          fi
+
+      - name: Resolve release notes
+        id: notes
+        if: steps.guard.outputs.released == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          VERSION: ${{ steps.pkg.outputs.version }}
+          MANUAL_NOTES: ${{ inputs.release_notes }}
+        run: |
+          set -o pipefail
+          notes=""
+          if [ -n "${MANUAL_NOTES:-}" ]; then
+            notes="$MANUAL_NOTES"
+          elif [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::No token with read access to ${STATIC_REPO}; releasing without notes."
+          else
+            for attempt in $(seq 1 20); do
+              title="$(gh release view "$VERSION" --repo "$STATIC_REPO" --json name --jq .name 2>/dev/null || true)"
+              if [ -n "$title" ]; then
+                notes="${title#"$VERSION" }"
+                break
+              fi
+              echo "No ${STATIC_REPO} release for ${VERSION} yet (attempt ${attempt}/20); waiting 30s."
+              sleep 30
+            done
+            if [ -z "$notes" ]; then
+              echo "::warning::No ${STATIC_REPO} release for ${VERSION} after 10 minutes; releasing without notes."
+            fi
+          fi
+          {
+            echo "notes<<RELEASE_NOTES_EOF"
+            printf '%s\n' "$notes"
+            echo "RELEASE_NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Safety check
+        if: steps.guard.outputs.released == 'false'
         run: |
           pack_output="$(npm pack --dry-run --ignore-scripts 2>&1)" || {
             echo "::error::npm pack failed:"
@@ -54,24 +128,42 @@ jobs:
             exit 1
           fi
 
+      - name: Check whether this version is already on npm
+        id: registry
+        if: steps.guard.outputs.released == 'false'
+        env:
+          PKG: ${{ steps.pkg.outputs.name }}
+          VERSION: ${{ steps.pkg.outputs.version }}
+        run: |
+          if [ -n "$(npm view "${PKG}@${VERSION}" version 2>/dev/null || true)" ]; then
+            echo "${PKG}@${VERSION} is already on npm; skipping publish."
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish
+        if: steps.guard.outputs.released == 'false' && steps.registry.outputs.published == 'false'
         run: npm publish --ignore-scripts --provenance --access public
 
       - name: Create git tag
+        if: steps.guard.outputs.released == 'false'
+        env:
+          VERSION: ${{ steps.pkg.outputs.version }}
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          git tag "v${VERSION}"
-          git push origin "v${VERSION}"
+          git tag "$VERSION"
+          git push origin "$VERSION"
 
       - name: Create GitHub release
+        if: steps.guard.outputs.released == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
+          VERSION: ${{ steps.pkg.outputs.version }}
+          RELEASE_NOTES: ${{ steps.notes.outputs.notes }}
         run: |
-          VERSION=$(node -p "require('./package.json').version")
           notes_file="$(mktemp)"
           trap 'rm -f "$notes_file"' EXIT
           printf '%s' "$RELEASE_NOTES" > "$notes_file"
-          gh release create "v${VERSION}" \
-            --title "v${VERSION}" \
+          gh release create "$VERSION" \
+            --title "$VERSION" \
             --notes-file "$notes_file"
