@@ -24,15 +24,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Check version not already tagged
         run: |
           set -o pipefail
           VERSION=$(node -p "require('./package.json').version")
-          if git ls-remote --exit-code --tags --refs origin "refs/tags/v${VERSION}" >/dev/null 2>&1; then
-            echo "::error::Tag v${VERSION} already exists. Bump the version in package.json first."
+          if git ls-remote --exit-code --tags --refs origin "refs/tags/${VERSION}" >/dev/null 2>&1; then
+            echo "::error::Tag ${VERSION} already exists. Bump the version in package.json first."
             exit 1
           fi
 
@@ -55,13 +55,13 @@ jobs:
           fi
 
       - name: Publish
-        run: npm publish --ignore-scripts --provenance --access public
+        run: npm publish --ignore-scripts --access public
 
       - name: Create git tag
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          git tag "v${VERSION}"
-          git push origin "v${VERSION}"
+          git tag "${VERSION}"
+          git push origin "${VERSION}"
 
       - name: Create GitHub release
         env:
@@ -72,6 +72,6 @@ jobs:
           notes_file="$(mktemp)"
           trap 'rm -f "$notes_file"' EXIT
           printf '%s' "$RELEASE_NOTES" > "$notes_file"
-          gh release create "v${VERSION}" \
-            --title "v${VERSION}" \
+          gh release create "${VERSION}" \
+            --title "${VERSION}" \
             --notes-file "$notes_file"
